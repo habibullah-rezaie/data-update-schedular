@@ -98,8 +98,13 @@ impl Schedular {
         );
     }
 
-    fn get_every_day_tasks(&self) -> &Vec<Task> {
-        self.tasks.get("day").unwrap().get("every").unwrap()
+    fn get_every_day_tasks(&self) -> Vec<TaskId> {
+        self.task_repeat_table
+            .get("day")
+            .unwrap()
+            .get("every")
+            .unwrap_or(&Vec::new())
+            .clone()
     }
 
     fn get_every_day_overdue_tasks(&self) -> Vec<&Task> {
