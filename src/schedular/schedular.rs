@@ -23,6 +23,7 @@ pub struct Schedular {
     tasks: HashMap<TaskId, Task>,
     task_repeat_table: TaskRepeatTable,
     runners: HashMap<TaskId, TaskRunner>,
+    first_day_running: bool,
 }
 
 impl Schedular {
@@ -36,6 +37,7 @@ impl Schedular {
             tasks,
             task_repeat_table,
             runners: HashMap::new(),
+            first_day_running: true,
         }
     }
 
