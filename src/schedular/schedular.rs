@@ -284,8 +284,48 @@ impl Schedular {
 
         println!("this is overdue tasks {:?}", overdue_tasks);
         loop {
-            // Map of (timeOfDay, taskId)
-            let mut todayRestTaskTable = self.prepareTodayRestTaskTable();
+            println!("Started day at {}", Utc::now().timestamp());
+            let mut today_tasks = self.get_today_tasks();
+
+            // Do not include overdue tasks if it's the first day that program has started running
+            if self.first_day_running {
+                today_tasks = today_tasks
+                    .iter()
+                    .filter_map(|task_id| {
+                        if overdue_tasks.contains(task_id) {
+                            None
+                        } else {
+                            Some(task_id.clone())
+                        }
+                    })
+                    .collect::<Vec<String>>();
+
+                // Set the first_day_running to false,
+                // meaning that there should not be any overdue tasks.
+                self.first_day_running = false;
+            }
+
+            println!("this is tasks {:?}", today_tasks);
+            while !today_tasks.is_empty() {
+                let (time_to_run, runners) = self.get_tasks_for_next_run(&mut today_tasks);
+
+                let rest_duration = get_diff_from_now_in_secs(time_to_run).unwrap();
+                assert!(rest_duration.is_positive());
+
+                tokio::time::sleep(std::time::Duration::from_secs(rest_duration as u64)).await;
+
+                self.run_tasks(runners).await;
+                println!("{:?}", today_tasks);
+            }
+
+            let seconds_passed_today = Utc::now().timestamp() % 86400;
+            let seconds_till_tomorrow = (86400 - seconds_passed_today) as u64;
+
+            tokio::time::sleep_until(
+                tokio::time::Instant::now()
+                    + tokio::time::Duration::from_millis(seconds_till_tomorrow * 1000),
+            )
+            .await;
         }
     }
 
