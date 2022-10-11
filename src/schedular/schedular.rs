@@ -4,7 +4,7 @@ use chrono::{NaiveTime, Utc, Weekday};
 use futures::future::join_all;
 use tokio::{join, spawn};
 
-use crate::util::time::diference_in_secs_from_now;
+use crate::util::time::get_diff_from_now_in_secs;
 
 use super::task::{
     self,
