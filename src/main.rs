@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use crate::schedular::task::task_options::{DailyTaskOptoins, TaskOptions};
+use dotenv::dotenv;
 use schedular::schedular::Schedular;
 use tokio::time::{sleep_until, Instant};
 
@@ -8,6 +9,7 @@ mod schedular;
 mod util;
 #[tokio::main]
 async fn main() {
+    dotenv().ok();
     let mut my_schedular = Schedular::new();
 
     async fn my_runner2() {
