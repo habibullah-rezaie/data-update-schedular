@@ -1,4 +1,4 @@
-use std::{collections::HashMap, env::join_paths, future::Future, pin::Pin};
+use std::{collections::HashMap, future::Future, pin::Pin};
 
 use chrono::{NaiveTime, Utc, Weekday};
 use futures::future::join_all;
@@ -7,28 +7,35 @@ use tokio::{join, spawn};
 use crate::util::time::diference_in_secs_from_now;
 
 use super::task::{
+    self,
     task::Task,
     task_options::{DailyTaskOptoins, TaskOptions},
     types::TaskTime,
+    types::TaskId,
 };
 
 type BoxFuture = Pin<Box<dyn Future<Output = ()> + Send>>;
-type TaskRunner = Box<dyn Fn() -> BoxFuture + Send>;
-type TodayRestTaskTable = HashMap<u32, String>;
+pub type TaskRunner = Box<dyn Fn() -> BoxFuture + Send>;
+
+type TaskRepeatTable = HashMap<String, HashMap<String, Vec<TaskId>>>;
 
 pub struct Schedular {
-    pub tasks: HashMap<String, HashMap<String, Vec<Task>>>,
-    runners: Vec<(String, TaskRunner)>,
+    tasks: HashMap<TaskId, Task>,
+    task_repeat_table: TaskRepeatTable,
+    runners: HashMap<TaskId, TaskRunner>,
 }
 
 impl Schedular {
     pub fn new() -> Self {
-        let mut tasks = HashMap::new();
+        let tasks: HashMap<TaskId, Task> = HashMap::new();
 
-        tasks.insert("day".to_string(), HashMap::new());
+        let mut task_repeat_table: TaskRepeatTable = HashMap::new();
+
+        task_repeat_table.insert("day".to_string(), HashMap::new());
         Schedular {
             tasks,
-            runners: Vec::new(),
+            task_repeat_table,
+            runners: HashMap::new(),
         }
     }
 
@@ -54,34 +61,41 @@ impl Schedular {
 
         match task_day {
             None => {
-                let every_day_tasks = self.tasks.get_mut(&String::from("day")).unwrap();
+                let every_day_tasks = self
+                    .task_repeat_table
+                    .get_mut(&String::from("day"))
+                    .unwrap();
 
                 // push the new_task or create new vector
                 match every_day_tasks.get_mut("every") {
-                    Some(tasks_vec) => tasks_vec.push(new_task.clone()),
+                    Some(tasks_vec) => tasks_vec.push(new_task.name.clone()),
                     None => {
-                        every_day_tasks.insert("every".to_string(), vec![new_task.clone()]);
+                        every_day_tasks.insert("every".to_string(), vec![new_task.name.clone()]);
                     }
                 };
             }
 
             Some(day) => {
-                let every_day_tasks = self.tasks.get_mut(&String::from("day")).unwrap();
+                let every_day_tasks = self
+                    .task_repeat_table
+                    .get_mut(&String::from("day"))
+                    .unwrap();
 
                 // push the new_task or create new vector
                 match every_day_tasks.get_mut(&day.to_string()) {
-                    Some(tasks_vec) => tasks_vec.push(new_task.clone()),
+                    Some(tasks_vec) => tasks_vec.push(new_task.name.clone()),
                     None => {
-                        every_day_tasks.insert(day.to_string(), vec![new_task.clone()]);
+                        every_day_tasks.insert(day.to_string(), vec![new_task.name.clone()]);
                     }
                 };
             }
         };
 
-        self.runners.push((
-            String::from(new_task.name),
+        self.tasks.insert(new_task.name.clone(), new_task.clone());
+        self.runners.insert(
+            String::from(&new_task.name),
             Box::new(move || Box::pin(runner())),
-        ));
+        );
     }
 
     fn get_every_day_tasks(&self) -> &Vec<Task> {
