@@ -279,22 +279,36 @@ impl Schedular {
         return today_tasks;
     }
 
-    pub async fn start(&self) {
-        self.run_overdue_tasks().await;
+    pub async fn start(&mut self) {
+        let overdue_tasks = self.run_overdue_tasks().await;
 
+        println!("this is overdue tasks {:?}", overdue_tasks);
         loop {
             // Map of (timeOfDay, taskId)
             let mut todayRestTaskTable = self.prepareTodayRestTaskTable();
         }
+    }
 
-        // while have tasks
-        // get next tasks out of today tasks
-        // get rest duration
-        // rest
-        // run next tasks
+    fn get_tasks_for_next_run(&self, today_tasks: &mut Vec<String>) -> (u32, Vec<BoxFuture>) {
+        // In case no tasks for today is empty
 
-        // rust until startof nextday
-        // as if its a human ;)
-        // }
+        // get the time of the first task
+        // get the difference from now
+        let first_task_time = self.tasks.get(&today_tasks[0]).unwrap().time;
+
+        let mut runners: Vec<BoxFuture> = Vec::new();
+        let mut task_id = today_tasks.remove(0);
+        while self.tasks.get(&task_id).unwrap().time == first_task_time {
+            let runner_fn = self.runners.get(&task_id).unwrap();
+            runners.push((runner_fn)());
+
+            if today_tasks.is_empty() {
+                break;
+            } else {
+                task_id = today_tasks.remove(0);
+            }
+        }
+
+        return (first_task_time, runners);
     }
 }
