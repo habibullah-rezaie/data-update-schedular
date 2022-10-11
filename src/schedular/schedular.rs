@@ -149,6 +149,88 @@ impl Schedular {
             .expect(&(String::from("Task not found: ") + task_id))
     }
 
+    fn get_all_overdue_for_start(&self) -> Vec<TaskId> {
+        let mut overdue_tasks: Vec<TaskId> = Vec::new();
+
+        // Look for due daily tasks
+        self.task_repeat_table
+            .get("day")
+            .unwrap()
+            .keys()
+            .for_each(|day_period| {
+                if day_period == &String::from("every") {
+                    let mut everyday_overdue = self
+                        .get_every_day_tasks()
+                        .iter()
+                        .filter_map(|task_id| {
+                            // everyday tasks are overdue only if their run time is past
+                            let task = self.get_task(task_id);
+
+                            if get_diff_from_now_in_secs(task.time).unwrap().is_negative() {
+                                return Some(task_id.clone());
+                            } else {
+                                return None;
+                            }
+                        })
+                        .collect::<Vec<_>>();
+
+                    if !everyday_overdue.is_empty() {
+                        overdue_tasks.append(&mut everyday_overdue);
+                    }
+                } else {
+                    let weekdays = ["Not a day", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+                    // Get the Weekday in number from 1 - 7  and  is Mon is 1
+                    let today_index = format!("{}", Utc::today().format("%u"));
+
+                    // get the index of day_period
+                    if let Some(day_period_index) =
+                        weekdays.iter().position(|day| day == day_period)
+                    {
+                        // tasks in a specific day are overdue in two cases:
+                        // It is in the same day as today
+
+                        println!("{day_period_index} day_period_index");
+                        if day_period_index.to_string() == today_index {
+                            let mut day_period_overdues = self
+                                .task_repeat_table
+                                .get("day")
+                                .unwrap()
+                                .get(day_period)
+                                .unwrap()
+                                .iter()
+                                .filter_map(|task_id| {
+                                    // everyday tasks are overdue only if their run time is past
+                                    let task = self.get_task(task_id);
+
+                                    if get_diff_from_now_in_secs(task.time).unwrap().is_negative() {
+                                        return Some(task_id.clone());
+                                    } else {
+                                        return None;
+                                    }
+                                })
+                                .collect();
+
+                            overdue_tasks.append(&mut day_period_overdues);
+                            // It is past in this week
+                        } else if day_period_index.to_string() < today_index {
+                            let mut tasks_of_day_period = self
+                                .task_repeat_table
+                                .get("day")
+                                .unwrap()
+                                .get(day_period)
+                                .unwrap()
+                                .clone();
+
+                            overdue_tasks.append(&mut tasks_of_day_period);
+                        }
+                    };
+                }
+            });
+
+        return overdue_tasks;
+    }
+
 
         let runners = self
             .runners
