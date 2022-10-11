@@ -6,6 +6,7 @@ use schedular::schedular::Schedular;
 use tokio::time::{sleep_until, Instant};
 
 mod schedular;
+mod tasks;
 mod util;
 #[tokio::main]
 async fn main() {
