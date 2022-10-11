@@ -141,6 +141,12 @@ impl Schedular {
             println!("{:#?}", task);
             task_names.insert(String::from(&task.name), true);
         });
+    pub fn get_task(&self, task_id: &String) -> &Task {
+        self.tasks
+            .get(task_id)
+            .expect(&(String::from("Task not found: ") + task_id))
+    }
+
 
         let runners = self
             .runners
