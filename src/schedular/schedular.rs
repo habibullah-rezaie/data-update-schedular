@@ -122,6 +122,17 @@ impl Schedular {
                 .is_positive()
             })
             .collect::<Vec<_>>()
+    fn get_a_particular_weekday_tasks(&self, day: &str) -> Vec<TaskId> {
+        if !["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].contains(&day) {
+            panic!("Invalid weekday provided");
+        }
+
+        self.task_repeat_table
+            .get("day")
+            .unwrap()
+            .get(&day.to_string())
+            .unwrap_or(&Vec::new())
+            .clone()
     }
 
     async fn run_overdue_tasks(&self) {
