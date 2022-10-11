@@ -257,14 +257,26 @@ impl Schedular {
         join_all(arg_futures).await;
     }
 
-    fn prepareTodayRestTaskTable(&self) -> TodayRestTaskTable {
-        let mut restTaskTable: TodayRestTaskTable = HashMap::new();
+    fn get_today_tasks(&self) -> Vec<String> {
+        // get everyday tasks
+        let mut today_tasks = self.get_every_day_tasks();
 
-        let every_day_tasks = self.get_every_day_tasks();
-        let mut minRest: TaskTime = diference_in_secs_from_now(every_day_tasks[0].time as usize);
-        for task in every_day_tasks {}
+        // get today's weekday and tasks in it
+        let now = Utc::now().to_rfc2822();
+        let today = &now.split_once(",").unwrap().0;
+        let mut tasks_of_this_weekday = self.get_a_particular_weekday_tasks(today);
 
-        return restTaskTable;
+        today_tasks.append(&mut tasks_of_this_weekday);
+
+        // Sort based on their time
+        today_tasks.sort_by(|a, b| {
+            let a_task = self.tasks.get(a).unwrap();
+            let b_task = self.tasks.get(b).unwrap();
+
+            return a_task.time.partial_cmp(&b_task.time).unwrap();
+        });
+
+        return today_tasks;
     }
 
     pub async fn start(&self) {
