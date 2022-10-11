@@ -17,5 +17,5 @@ pub fn get_diff_from_now_in_secs(time_seconds: u32) -> std::result::Result<i64, 
     }
     let diff = NaiveTime::signed_duration_since(now.unwrap(), Utc::now().time()).num_seconds();
 
-    return Ok(diff);
+    Ok(diff)
 }
