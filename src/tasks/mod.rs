@@ -2,11 +2,9 @@ mod domy_task;
 
 use chrono::Weekday;
 
-use crate::{
-    schedular::{
-        schedular::TaskRunner,
-        task::task_options::{DailyTaskOptoins, TaskOptions},
-    },
+use crate::schedular::{
+    task::task_options::{DailyTaskOptoins, TaskOptions},
+    TaskRunner,
 };
 
 pub fn get_tasks() -> Vec<(TaskRunner, DailyTaskOptoins)> {
