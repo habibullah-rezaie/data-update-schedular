@@ -1,5 +1,5 @@
 use dotenv::dotenv;
-use schedular::schedular::Schedular;
+use schedular::Schedular;
 use tasks::get_tasks;
 
 mod schedular;
