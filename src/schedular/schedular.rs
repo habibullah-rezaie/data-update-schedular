@@ -231,15 +231,26 @@ impl Schedular {
         return overdue_tasks;
     }
 
+    async fn run_overdue_tasks(&self) -> Vec<TaskId> {
+        let overdue_tasks = self.get_all_overdue_for_start();
 
-        let runners = self
-            .runners
+        let task_runners = overdue_tasks
             .iter()
-            .filter(|runner_tuple| task_names.contains_key(&runner_tuple.0))
-            .map(|runner| (runner.1)())
+            .filter_map(|task_id| {
+                let task = self.get_task(task_id);
+
+                return if task.should_run_late {
+                    let runner = self.runners.get(task_id).unwrap();
+                    Some((runner)())
+                } else {
+                    None
+                };
+            })
             .collect::<Vec<_>>();
 
-        self.run_tasks(runners).await;
+        self.run_tasks(task_runners).await;
+
+        return overdue_tasks;
     }
 
     async fn run_tasks(&self, arg_futures: Vec<BoxFuture>) {
