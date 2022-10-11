@@ -1,16 +1,13 @@
 use std::{collections::HashMap, future::Future, pin::Pin};
 
-use chrono::{NaiveTime, Utc, Weekday};
+use chrono::Utc;
 use futures::future::join_all;
-use tokio::{join, spawn};
 
 use crate::util::time::get_diff_from_now_in_secs;
 
 use super::task::{
-    self,
     task::Task,
     task_options::{DailyTaskOptoins, TaskOptions},
-    types::TaskTime,
     types::TaskId,
 };
 
@@ -109,21 +106,13 @@ impl Schedular {
             .clone()
     }
 
-    fn get_every_day_overdue_tasks(&self) -> Vec<&Task> {
-        let now = Utc::now().time();
+    // fn get_tasks_of_ids(&self, task_ids: Vec<TaskId>) -> Vec<Task> {
+    //     task_ids
+    //         .iter()
+    //         .map(|task_id| self.tasks.get(task_id).unwrap().clone())
+    //         .collect::<Vec<_>>()
+    // }
 
-        println!("{}", now);
-        self.get_every_day_tasks()
-            .iter()
-            .filter(|task| {
-                NaiveTime::signed_duration_since(
-                    now,
-                    NaiveTime::from_num_seconds_from_midnight(task.time, 0),
-                )
-                .num_seconds()
-                .is_positive()
-            })
-            .collect::<Vec<_>>()
     fn get_a_particular_weekday_tasks(&self, day: &str) -> Vec<TaskId> {
         if !["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].contains(&day) {
             panic!("Invalid weekday provided");
@@ -137,12 +126,6 @@ impl Schedular {
             .clone()
     }
 
-    async fn run_overdue_tasks(&self) {
-        let mut task_names: HashMap<String, bool> = HashMap::new();
-        self.get_every_day_overdue_tasks().iter().for_each(|task| {
-            println!("{:#?}", task);
-            task_names.insert(String::from(&task.name), true);
-        });
     pub fn get_task(&self, task_id: &String) -> &Task {
         self.tasks
             .get(task_id)
