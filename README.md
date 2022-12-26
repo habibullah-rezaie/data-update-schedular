@@ -1,5 +1,5 @@
 # data-update-schedular
-Async Task Runner 
+Async Task Runner built with Rust
 
 This project is built to be used to run async tasks given to it, overtime, at exact time assigned.
 All project is coded in Rust and I myself use it to retrieve updates from arround the web and store them in BookShelf's database.
